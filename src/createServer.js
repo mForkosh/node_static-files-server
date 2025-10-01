@@ -7,8 +7,18 @@ const path = require('path');
 function createServer() {
   return http.createServer(async (req, res) => {
     const BASE_URL = path.resolve(__dirname, '..', 'public');
-
     const url = new URL(req.url, 'http://localhost:5701');
+
+    if (!url.pathname.startsWith('/file')) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+
+      res.end(
+        'Invalid request. To load a file, use the URL format: /file/<filename>',
+      );
+
+      return;
+    }
+
     const requestedPath =
       url.pathname.replace(/^\/file\/?/, '') || 'index.html';
     const fullPath = path.resolve(BASE_URL, requestedPath);
@@ -38,7 +48,7 @@ function createServer() {
 
     const fileData = await fs.readFile(fullPath);
 
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.writeHead(200, { 'Content-Type': `text/plain` });
     res.end(fileData);
   });
 }

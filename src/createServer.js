@@ -23,7 +23,7 @@ function createServer() {
       url.pathname.replace(/^\/file\/?/, '') || 'index.html';
     const fullPath = path.resolve(BASE_URL, requestedPath);
 
-    if (/\/{2,}/.test(req.url)) {
+    if (/\/{2,}/.test(url.pathname)) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Paths having duplicated slashes');
 
@@ -46,10 +46,31 @@ function createServer() {
       return;
     }
 
-    const fileData = await fs.readFile(fullPath);
+    try {
+      const stats = await fs.stat(fullPath);
 
-    res.writeHead(200, { 'Content-Type': `text/plain` });
-    res.end(fileData);
+      if (!stats.isFile()) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Target is not file');
+
+        return;
+      }
+    } catch (notExistFile) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('File not exist');
+
+      return;
+    }
+
+    try {
+      const fileData = await fs.readFile(fullPath);
+
+      res.writeHead(200, { 'Content-Type': `text/plain` });
+      res.end(fileData);
+    } catch (error) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Something went wrong');
+    }
   });
 }
 
